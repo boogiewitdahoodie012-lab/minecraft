@@ -1,0 +1,10 @@
+{
+  "schemaVersion": 1,
+  "id": "auroratunes",
+  "version": "1.0.0",
+  "name": "Aurora Tunes",
+  "description": "Shift+B music player with your own songs.",
+  "environment": "client",
+  "entrypoints": { "client": ["com.auroratunes.AuroraTunes"] },
+  "depends": { "fabricloader": "*", "fabric-api": "*", "minecraft": "*" }
+}
