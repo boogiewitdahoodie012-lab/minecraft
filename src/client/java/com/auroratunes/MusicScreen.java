@@ -3,10 +3,10 @@ package com.auroratunes;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
-import org.lwjgl.PointerBuffer;
-import org.lwjgl.system.MemoryStack;
-import org.lwjgl.util.tinyfd.TinyFileDialogs;
-import java.nio.file.*;
+import java.awt.FileDialog;
+import java.awt.Frame;
+import java.io.File;
+import java.nio.file.Path;
 import java.util.List;
 
 public class MusicScreen extends Screen {
@@ -28,15 +28,19 @@ public class MusicScreen extends Screen {
     }
 
     private void addSong() {
-        try (MemoryStack st = MemoryStack.stackPush()) {
-            PointerBuffer filters = st.mallocPointer(5);
-            for (String f : new String[]{"*.ogg", "*.mp3", "*.wav", "*.flac", "*.m4a"}) filters.put(st.UTF8(f));
-            filters.flip();
-            String path = TinyFileDialogs.tinyfd_openFileDialog("Add song", "", filters, "Audio files", false);
-            if (path != null) {
-                Songs.importFile(Paths.get(path));
-                rebuildWidgets();
-            }
-        }
+        // Runs the file picker off the game thread, then re-opens this screen to refresh the list
+        Thread t = new Thread(() -> {
+            try {
+                FileDialog fd = new FileDialog((Frame) null, "Add song (ogg, mp3, wav...)", FileDialog.LOAD);
+                fd.setVisible(true);
+                if (fd.getFile() != null) {
+                    File f = new File(fd.getDirectory(), fd.getFile());
+                    Songs.importFile(f.toPath());
+                    this.minecraft.execute(() -> this.minecraft.gui.setScreen(new MusicScreen()));
+                }
+            } catch (Throwable ignored) {}
+        }, "AuroraTunes-Picker");
+        t.setDaemon(true);
+        t.start();
     }
 }
